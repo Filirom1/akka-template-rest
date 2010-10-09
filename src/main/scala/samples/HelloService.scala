@@ -5,15 +5,14 @@
 package sample.rest.scala
 
 import javax.ws.rs.{GET, Path, Produces}
-import se.scalablesolutions.akka.actor.{SupervisorFactory, Actor}
 import se.scalablesolutions.akka.config.ScalaConfig._
-
+import se.scalablesolutions.akka.actor.{ActorRegistry, SupervisorFactory, Actor}
 class Boot {
-  	val factory = SupervisorFactory(
-		SupervisorConfig(
-			RestartStrategy(OneForOne, 3, 100, List(classOf[Exception])),
-			Supervise(Actor.actorOf[MyActor], LifeCycle(Permanent)) :: Nil))
-	factory.newInstance.start
+  val factory = SupervisorFactory(
+    SupervisorConfig(
+      RestartStrategy(OneForOne, 3, 100, List(classOf[Exception])),
+      Supervise(Actor.actorOf[MyActor], LifeCycle(Permanent)) :: Nil))
+  factory.newInstance.start
 }
 
 private case object Hello
@@ -23,14 +22,10 @@ class HelloService {
   @GET
   @Produces(Array("text/html"))
   def hello = {
-    val myActor = Actor.actorOf[MyActor]
-    //I don't understand why SupervisorFactory do not start the actor ?????
-    myActor.start
+    val myActor = ActorRegistry.actorFor[MyActor].get
     (myActor !! Hello).getOrElse("Hyyy")
 
   }
-
-
 }
 
 class MyActor extends Actor {
